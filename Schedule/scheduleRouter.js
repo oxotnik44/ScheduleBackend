@@ -1,11 +1,8 @@
-'use strict'
+"use strict";
 
 const groupController = require("./scheduleController");
-module.exports = (app) =>{
-    const scheduleController = require("./scheduleController")
+module.exports = (app) => {
+  const scheduleController = require("./scheduleController");
 
-    app.route('/getScheduleResidents').post(scheduleController.getScheduleResidents)
-    app.route('/getScheduleExtramuralists').post(scheduleController.getScheduleExtramuralists)
-    app.route('/getSchedule').post(scheduleController.getSchedule)
-
-}
+  app.route("/getSchedule").post(scheduleController.getSchedule);
+};
