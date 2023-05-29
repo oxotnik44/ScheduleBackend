@@ -6,5 +6,6 @@ module.exports = (app) =>{
 
     app.route('/getScheduleResidents').post(scheduleController.getScheduleResidents)
     app.route('/getScheduleExtramuralists').post(scheduleController.getScheduleExtramuralists)
+    app.route('/getSchedule').post(scheduleController.getSchedule)
 
 }
