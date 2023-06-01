@@ -2,7 +2,7 @@ const db = require("../db");
 
 exports.getDepartments = (req, res) => {
   db.query(
-    "SELECT id AS idDepartment, name AS nameDepartment, pic AS picture, fullname AS fullnameDepartment FROM dek_dep",
+    "SELECT id AS idDepartment, name AS nameDepartment, pic AS imgDepartment, fullname AS fullnameDepartment FROM dek_dep",
     (error, rows) => {
       if (error) {
         console.log(error);
