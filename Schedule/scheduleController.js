@@ -1,12 +1,15 @@
 "use strict";
 const db = require("../db");
 const moment = require("moment");
+require("moment-ru"); // Импорт русской локали moment.js
 
 function isWeekEven() {
   const currentDate = new Date();
   const firstDayOfYear = new Date(currentDate.getFullYear(), 0, 1);
   const pastDaysOfYear = (currentDate - firstDayOfYear) / 86400000;
-  const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  const weekNumber = Math.ceil(
+    (pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7
+  );
   return weekNumber % 2 === 0;
 }
 
@@ -100,6 +103,9 @@ exports.getSchedule = (req, res) => {
           if (row.chetnechet === 2 && !isEvenWeek) {
             return true;
           }
+          if (row.chetnechet === null) {
+            return true; // Добавлено условие для заочных студентов
+          }
           return false;
         });
 
@@ -110,7 +116,7 @@ exports.getSchedule = (req, res) => {
           }
 
           if (row.date) {
-            row.date = moment(row.date).format("D MMMM YYYY");
+            row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
           }
         });
 
