@@ -1,5 +1,6 @@
 "use strict";
 const db = require("../db");
+const moment = require("moment");
 
 function isWeekEven() {
   const currentDate = new Date();
@@ -40,7 +41,8 @@ exports.getSchedule = (req, res) => {
         '.'
       ) AS nameEducator,
       dek_group_predmet.id_prep AS idEducator,
-      dek_prepod.regalia AS regaliaEducator
+      dek_prepod.regalia AS regaliaEducator,
+      NULL AS date
     FROM dek_group_predmet
     LEFT JOIN dek_prepod ON dek_prepod.id = dek_group_predmet.id_prep
     LEFT JOIN dek_room ON dek_room.id = dek_group_predmet.id_room
@@ -68,7 +70,8 @@ exports.getSchedule = (req, res) => {
         '.'
       ) AS nameEducator,
       dek_zgroup_predmet.id_prep AS idEducator,
-      dek_prepod.regalia AS regaliaEducator
+      dek_prepod.regalia AS regaliaEducator,
+      dek_zgroup_predmet.date AS date
     FROM dek_zgroup_predmet
     LEFT JOIN dek_prepod ON dek_prepod.id = dek_zgroup_predmet.id_prep
     LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
@@ -104,6 +107,10 @@ exports.getSchedule = (req, res) => {
           const numberPair = row.numberPair;
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
             row.numberPair = timeIntervals[numberPair - 1];
+          }
+
+          if (row.date) {
+            row.date = moment(row.date).format("D MMMM YYYY");
           }
         });
 
