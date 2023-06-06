@@ -52,35 +52,38 @@ exports.getSchedule = (req, res) => {
     WHERE dek_group_predmet.id_group = ${id_group}
       AND dek_group_predmet.id_prep != -1
       AND dek_group_predmet.chetnechet IN (1, 2)
+    
   
     UNION
   
     SELECT
-  dek_zgroup_predmet.id AS idPair,
-  dek_room.number AS roomNumber,
-  NULL AS chetnechet,
-  '' AS weekday,
-  dek_zgroup_predmet.para AS numberPair,
-  '' AS typePair,
-  dek_zgroup_predmet.predmet AS namePair,
-  CONCAT(
-    SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
-    ' ',
-    UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1, 1)),
-    '.',
-    UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 2, 1)),
-    '.'
-  ) AS nameEducator,
-  dek_zgroup_predmet.id_prep AS idEducator,
-  dek_prepod.regalia AS regaliaEducator,
-  dek_zgroup_predmet.date AS date
-FROM dek_zgroup_predmet
-LEFT JOIN dek_prepod ON dek_prepod.id = dek_zgroup_predmet.id_prep
-LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
-WHERE dek_zgroup_predmet.id_group = ${id_group}
-  AND dek_zgroup_predmet.id_prep != -1
-  AND WEEKOFYEAR(dek_zgroup_predmet.date) = WEEKOFYEAR(NOW())
-ORDER BY date ASC, numberPair ASC
+    dek_zgroup_predmet.id AS idPair,
+    dek_room.number AS roomNumber,
+    NULL AS chetnechet,
+    '' AS weekday,
+    dek_zgroup_predmet.para AS numberPair,
+    '' AS typePair,
+    dek_zgroup_predmet.predmet AS namePair,
+    CONCAT(
+      SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
+      ' ',
+      UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1, 1)),
+      '.',
+      UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 2, 1)),
+      '.'
+    ) AS nameEducator,
+    dek_zgroup_predmet.id_prep AS idEducator,
+    dek_prepod.regalia AS regaliaEducator,
+    dek_zgroup_predmet.date AS date
+  FROM dek_zgroup_predmet
+  LEFT JOIN dek_prepod ON dek_prepod.id = dek_zgroup_predmet.id_prep
+  LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
+  WHERE dek_zgroup_predmet.id_group = ${id_group}
+    AND dek_zgroup_predmet.id_prep != -1
+    AND dek_zgroup_predmet.date >= CURDATE()
+    AND dek_zgroup_predmet.date < CURDATE() + INTERVAL 1 WEEK
+  ORDER BY date ASC, numberPair ASC
+  
 `,
     (error, rows) => {
       const timeIntervals = [
