@@ -88,6 +88,15 @@ ORDER BY date ASC, numberPair ASC
   
 `,
     (error, rows) => {
+      const timeIntervals = [
+        "8:30-10:00",
+        "10:10-11:40",
+        "12:10-13:40",
+        "14:10-15:40",
+        "15:50-17:20",
+        "17:30-19:00",
+        "19:10-20:40",
+      ];
       if (error) {
         console.log(error);
         res.status(500).json({ error: "An error occurred" });
@@ -107,6 +116,11 @@ ORDER BY date ASC, numberPair ASC
         });
 
         filteredRows.forEach((row) => {
+          const numberPair = row.numberPair;
+          if (numberPair >= 1 && numberPair <= timeIntervals.length) {
+            row.numberPair = timeIntervals[numberPair - 1];
+          }
+
           if (row.date) {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
           }
