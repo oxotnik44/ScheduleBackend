@@ -12,9 +12,7 @@ function getWeekNumber() {
 exports.getSchedule = (req, res) => {
   const { id_group } = req.body;
   const currentWeek = getWeekNumber();
-  const isEvenWeek = currentWeek % 2 === 0;
   const nextWeek = currentWeek === 4 ? 1 : currentWeek + 1;
-
 
   db.query(
     `SELECT
@@ -99,23 +97,12 @@ exports.getSchedule = (req, res) => {
         console.log(error);
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
-        const filteredRows = rows.filter((row) => {
-          if (row.chetnechet === 1 && row.weekNumber === currentWeek) {
-            return true;
-          }
-          if (row.chetnechet === 2 && row.weekNumber === currentWeek) {
-            return true;
-          }
-          if (row.chetnechet === 1 && row.weekNumber === nextWeek) {
-            return true;
-          }
-          if (row.chetnechet === 2 && row.weekNumber === nextWeek) {
-            return true;
-          }
-          return false;
-        });
+        const schedule = {
+          even: [],
+          odd: [],
+        };
 
-        filteredRows.forEach((row) => {
+        rows.forEach((row) => {
           const numberPair = row.numberPair;
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
             row.numberPair = timeIntervals[numberPair - 1];
@@ -124,25 +111,21 @@ exports.getSchedule = (req, res) => {
           if (row.date) {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
           }
-        });
 
-        const schedule = {
-          even: [],
-          odd: [],
-        };
-
-        filteredRows.forEach((row) => {
-          if (row.chetnechet === 1 && row.weekNumber === currentWeek) {
-            schedule.even.push(row);
-          } else if (row.chetnechet === 2 && row.weekNumber === currentWeek) {
-            schedule.odd.push(row);
-          } else if (row.chetnechet === 1 && row.weekNumber === nextWeek) {
-            schedule.even.push(row);
-          } else if (row.chetnechet === 2 && row.weekNumber === nextWeek) {
-            schedule.odd.push(row);
+          if (
+            (row.chetnechet === 1 && row.weekNumber === currentWeek) ||
+            (row.chetnechet === 2 && row.weekNumber === currentWeek) ||
+            (row.chetnechet === 1 && row.weekNumber === nextWeek) ||
+            (row.chetnechet === 2 && row.weekNumber === nextWeek)
+          ) {
+            if (row.chetnechet === 1) {
+              schedule.even.push(row);
+            } else {
+              schedule.odd.push(row);
+            }
           }
         });
-  
+
         const result = {
           schedule,
         };
