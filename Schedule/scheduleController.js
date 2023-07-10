@@ -15,7 +15,8 @@ exports.getSchedule = (req, res) => {
   const nextWeek = currentWeek === 4 ? 1 : currentWeek + 1;
 
   db.query(
-    `SELECT
+  `SELECT * FROM (
+    SELECT
       dek_group_predmet.id AS idPair,
       dek_room.number AS roomNumber,
       dek_group_predmet.chetnechet,
@@ -43,7 +44,8 @@ exports.getSchedule = (req, res) => {
       dek_group_predmet.id_prep AS idEducator,
       dek_prepod.regalia AS regaliaEducator,
       NULL AS date,
-      ${currentWeek} AS weekNumber
+      ${currentWeek} AS weekNumber,
+      FIELD(dek_group_predmet.day, 1, 2, 3, 4, 5, 6, 7) AS orderWeekday
     FROM dek_group_predmet
     LEFT JOIN dek_prepod ON dek_prepod.id = dek_group_predmet.id_prep
     LEFT JOIN dek_room ON dek_room.id = dek_group_predmet.id_room
@@ -73,7 +75,8 @@ exports.getSchedule = (req, res) => {
       dek_zgroup_predmet.id_prep AS idEducator,
       dek_prepod.regalia AS regaliaEducator,
       dek_zgroup_predmet.date AS date,
-      ${nextWeek} AS weekNumber
+      ${nextWeek} AS weekNumber,
+      NULL AS orderWeekday
     FROM dek_zgroup_predmet
     LEFT JOIN dek_prepod ON dek_prepod.id = dek_zgroup_predmet.id_prep
     LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
@@ -82,8 +85,19 @@ exports.getSchedule = (req, res) => {
       AND dek_zgroup_predmet.id_prep != -1
       AND dek_zgroup_predmet.date >= CURDATE()
       AND dek_zgroup_predmet.date < CURDATE() + INTERVAL 1 WEEK
-    ORDER BY date ASC, numberPair ASC`,
-    (error, rows) => {
+  ) AS subquery
+  ORDER BY CASE WHEN weekday = 'Понедельник' THEN 1
+               WHEN weekday = 'Вторник' THEN 2
+               WHEN weekday = 'Среда' THEN 3
+               WHEN weekday = 'Четверг' THEN 4
+               WHEN weekday = 'Пятница' THEN 5
+               WHEN weekday = 'Суббота' THEN 6
+               WHEN weekday = 'Воскресенье' THEN 7
+               ELSE 8
+          END ASC, 
+          CASE WHEN weekday = '' THEN date END ASC, 
+          numberPair ASC`,
+  (error, rows) => {
       const timeIntervals = [
         "8:30-10:00",
         "10:10-11:40",
