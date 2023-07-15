@@ -9,13 +9,13 @@ function getWeekNumber() {
   return weekNumber;
 }
 
-exports.getSchedule = (req, res) => {
+exports.getScheduleStudent = (req, res) => {
   const { id_group } = req.body;
   const currentWeek = getWeekNumber();
   const nextWeek = currentWeek === 4 ? 1 : currentWeek + 1;
 
   db.query(
-  `SELECT * FROM (
+    `SELECT * FROM (
     SELECT
       dek_group_predmet.id AS idPair,
       dek_room.number AS roomNumber,
@@ -97,7 +97,7 @@ exports.getSchedule = (req, res) => {
           END ASC, 
           CASE WHEN weekday = '' THEN date END ASC, 
           numberPair ASC`,
-  (error, rows) => {
+    (error, rows) => {
       const timeIntervals = [
         "8:30-10:00",
         "10:10-11:40",
@@ -149,3 +149,5 @@ exports.getSchedule = (req, res) => {
     }
   );
 };
+
+
