@@ -5,7 +5,6 @@ const bodyParser = require("body-parser");
 const groupsRouter = require("./Groups/groupRouter");
 const scheduleStudentRouter = require("./ScheduleStudent/scheduleStudentRouter");
 const scheduleEducatorRouter = require("./ScheduleEducator/scheduleEducatorRouter");
-
 const departmentsRouter = require("./Departments/departmentsRouter");
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -15,7 +14,6 @@ groupsRouter(app);
 scheduleStudentRouter(app);
 scheduleEducatorRouter(app);
 departmentsRouter(app);
-
 app.listen(port, () => {
   console.log(`Сервер запущен на порту ${port}`);
 });
