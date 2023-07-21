@@ -90,9 +90,9 @@ exports.getScheduleEducatorResidents = (req, res) => {
           }
 
           if (row.chetnechet === 1) {
-            schedule.even.push(row);
-          } else if (row.chetnechet === 2) {
             schedule.odd.push(row);
+          } else if (row.chetnechet === 2) {
+            schedule.even.push(row);
           }
         });
 
