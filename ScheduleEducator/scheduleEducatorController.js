@@ -19,45 +19,36 @@ exports.getEducator = (req, res) => {
 };
 exports.getScheduleEducatorResidents = (req, res) => {
   const { id_prep } = req.body;
-  const currentWeek = getWeekNumber(); // Предполагается, что функция getWeekNumber возвращает текущую неделю (четную или нечетную)
+  const currentWeek = getWeekNumber();
 
   db.query(
     `
     SELECT
       dek_group_predmet.id AS idPair,
       dek_room.number AS roomNumber,
+      dek_group.name AS groupName,
       dek_group_predmet.chetnechet,
       CASE
-          WHEN dek_group_predmet.day = 1 THEN 'Понедельник'
-          WHEN dek_group_predmet.day = 2 THEN 'Вторник'
-          WHEN dek_group_predmet.day = 3 THEN 'Среда'
-          WHEN dek_group_predmet.day = 4 THEN 'Четверг'
-          WHEN dek_group_predmet.day = 5 THEN 'Пятница'
-          WHEN dek_group_predmet.day = 6 THEN 'Суббота'
-          ELSE ''
+        WHEN dek_group_predmet.day = 1 THEN 'Понедельник'
+        WHEN dek_group_predmet.day = 2 THEN 'Вторник'
+        WHEN dek_group_predmet.day = 3 THEN 'Среда'
+        WHEN dek_group_predmet.day = 4 THEN 'Четверг'
+        WHEN dek_group_predmet.day = 5 THEN 'Пятница'
+        WHEN dek_group_predmet.day = 6 THEN 'Суббота'
+        ELSE ''
       END AS weekday,
       dek_group_predmet.para AS numberPair,
       dek_cpoints.short AS typePair,
       dek_group_predmet.predmet AS namePair,
-      CONCAT(
-        SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
-        ' ',
-        UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1, 1)),
-        '.',
-        UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 2, 1)),
-        '.'
-      ) AS nameEducator,
-      dek_group_predmet.id_prep AS idEducator,
-      dek_prepod.regalia AS regaliaEducator,
       NULL AS date
     FROM dek_group_predmet
-    LEFT JOIN dek_prepod ON dek_prepod.id = dek_group_predmet.id_prep
+    LEFT JOIN dek_group ON dek_group.id = dek_group_predmet.id_group
     LEFT JOIN dek_room ON dek_room.id = dek_group_predmet.id_room
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_group_predmet.lek_sem
     WHERE dek_group_predmet.id_prep = ${id_prep}
       AND dek_group_predmet.id_prep != -1
       AND dek_group_predmet.day <= 6
-      AND dek_group_predmet.chetnechet = ${currentWeek % 2 === 0 ? 2 : 1}
+      AND dek_group_predmet.chetnechet IN (1, 2) -- Учитывать и четные, и нечетные недели
     ORDER BY 
       CASE WHEN weekday = 'Понедельник' THEN 1
            WHEN weekday = 'Вторник' THEN 2
@@ -68,8 +59,9 @@ exports.getScheduleEducatorResidents = (req, res) => {
            WHEN weekday = 'Воскресенье' THEN 7
            ELSE 8
       END ASC, 
+      chetnechet ASC, -- Сортировать по chetnechet, чтобы объединить четные и нечетные недели
       date ASC, 
-      numberPair ASC
+      numberPair ASC;
     `,
     (error, rows) => {
       const timeIntervals = [
@@ -86,18 +78,30 @@ exports.getScheduleEducatorResidents = (req, res) => {
         console.log(error);
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
+        const schedule = {
+          even: [],
+          odd: [],
+        };
+
         rows.forEach((row) => {
           const numberPair = row.numberPair;
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
             row.numberPair = timeIntervals[numberPair - 1];
           }
+
+          if (row.chetnechet === 1) {
+            schedule.even.push(row);
+          } else if (row.chetnechet === 2) {
+            schedule.odd.push(row);
+          }
         });
 
-        res.status(200).json(rows);
+        res.status(200).json(schedule);
       }
     }
   );
 };
+
 
 exports.getScheduleEducatorExtramuralist = (req, res) => {
   const { id_prep } = req.body;
@@ -105,45 +109,33 @@ exports.getScheduleEducatorExtramuralist = (req, res) => {
   db.query(
     `
     SELECT
-      dek_zgroup_predmet.id AS idPair,
-      dek_room.number AS roomNumber,
-      NULL AS chetnechet,
-      '' AS weekday,
-      dek_zgroup_predmet.para AS numberPair,
-      dek_cpoints.short AS typePair,
-      dek_zgroup_predmet.predmet AS namePair,
-      CONCAT(
-        SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
-        ' ',
-        UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -2), 1, 1)),
-        '.',
-        UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1, 1))
-      ) AS nameEducator,
-      dek_zgroup_predmet.id_prep AS idEducator,
-      dek_prepod.regalia AS regaliaEducator,
-      dek_zgroup_predmet.date AS date
-    FROM dek_zgroup_predmet
-    LEFT JOIN dek_prepod ON dek_prepod.id = dek_zgroup_predmet.id_prep
-    LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
-    LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
-    WHERE dek_zgroup_predmet.id_prep = ${id_prep}
-      AND dek_zgroup_predmet.id_prep != -1
-      AND MONTH(dek_zgroup_predmet.date) = 11
-      AND YEAR(dek_zgroup_predmet.date) = YEAR(CURDATE())
-      AND dek_zgroup_predmet.date >= '2023-11-01'
-      AND dek_zgroup_predmet.date < '2023-12-01'
-    ORDER BY 
-      CASE WHEN weekday = 'Понедельник' THEN 1
-           WHEN weekday = 'Вторник' THEN 2
-           WHEN weekday = 'Среда' THEN 3
-           WHEN weekday = 'Четверг' THEN 4
-           WHEN weekday = 'Пятница' THEN 5
-           WHEN weekday = 'Суббота' THEN 6
-           WHEN weekday = 'Воскресенье' THEN 7
-           ELSE 8
-      END ASC, 
-      date ASC, 
-      numberPair ASC
+    dek_zgroup_predmet.id AS idPair,
+    dek_room.number AS roomNumber,
+    dek_group.name AS groupName,
+    NULL AS chetnechet,
+    '' AS weekday,
+    dek_zgroup_predmet.para AS numberPair,
+    dek_cpoints.short AS typePair,
+    dek_zgroup_predmet.predmet AS namePair,
+    dek_zgroup_predmet.date AS date
+  FROM dek_zgroup_predmet
+  LEFT JOIN dek_group ON dek_group.id = dek_zgroup_predmet.id_group
+  LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
+  LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
+  WHERE dek_zgroup_predmet.id_prep = ${id_prep}
+    AND dek_zgroup_predmet.id_prep != -1
+  ORDER BY 
+    CASE WHEN weekday = 'Понедельник' THEN 1
+         WHEN weekday = 'Вторник' THEN 2
+         WHEN weekday = 'Среда' THEN 3
+         WHEN weekday = 'Четверг' THEN 4
+         WHEN weekday = 'Пятница' THEN 5
+         WHEN weekday = 'Суббота' THEN 6
+         WHEN weekday = 'Воскресенье' THEN 7
+         ELSE 8
+    END ASC, 
+    date ASC, 
+    numberPair ASC
     `,
     (error, rows) => {
       const timeIntervals = [
