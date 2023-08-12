@@ -79,8 +79,8 @@ exports.getScheduleEducatorResidents = (req, res) => {
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
         const schedule = {
-          even: [],
-          odd: [],
+          nominator: [],
+          denominator: [],
         };
 
         rows.forEach((row) => {
@@ -90,9 +90,9 @@ exports.getScheduleEducatorResidents = (req, res) => {
           }
 
           if (row.chetnechet === 1) {
-            schedule.odd.push(row);
+            schedule.nominator.push(row);
           } else if (row.chetnechet === 2) {
-            schedule.even.push(row);
+            schedule.denominator.push(row);
           }
         });
 
