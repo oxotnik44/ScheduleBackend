@@ -117,8 +117,8 @@ exports.getScheduleStudent = (req, res) => {
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
         const scheduleResident = {
-          even: [],
-          odd: [],
+          numerator: [],
+          denominator: [],
         };
         const scheduleExtramural = [];
 
@@ -140,9 +140,9 @@ exports.getScheduleStudent = (req, res) => {
               (row.chetnechet === 2 && row.weekNumber === nextWeek)
             ) {
               if (row.chetnechet === 1) {
-                scheduleResident.even.push(row);
+                scheduleResident.numerator.push(row);
               } else {
-                scheduleResident.odd.push(row);
+                scheduleResident.denominator.push(row);
               }
             }
           } else {

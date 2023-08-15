@@ -79,7 +79,7 @@ exports.getScheduleEducatorResidents = (req, res) => {
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
         const schedule = {
-          nominator: [],
+          numerator: [],
           denominator: [],
         };
 
@@ -90,7 +90,7 @@ exports.getScheduleEducatorResidents = (req, res) => {
           }
 
           if (row.chetnechet === 1) {
-            schedule.nominator.push(row);
+            schedule.numerator.push(row);
           } else if (row.chetnechet === 2) {
             schedule.denominator.push(row);
           }
