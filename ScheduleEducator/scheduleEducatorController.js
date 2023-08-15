@@ -48,7 +48,8 @@ exports.getScheduleEducatorResidents = (req, res) => {
     WHERE dek_group_predmet.id_prep = ${id_prep}
       AND dek_group_predmet.id_prep != -1
       AND dek_group_predmet.day <= 6
-      AND dek_group_predmet.chetnechet IN (1, 2) -- Учитывать и четные, и нечетные недели
+      AND dek_group_predmet.chetnechet IN (1, 2)
+      AND dek_group.name NOT LIKE '%скрытая%' 
     ORDER BY 
       CASE WHEN weekday = 'Понедельник' THEN 1
            WHEN weekday = 'Вторник' THEN 2
@@ -59,7 +60,7 @@ exports.getScheduleEducatorResidents = (req, res) => {
            WHEN weekday = 'Воскресенье' THEN 7
            ELSE 8
       END ASC, 
-      chetnechet ASC, -- Сортировать по chetnechet, чтобы объединить четные и нечетные недели
+      chetnechet ASC, 
       date ASC, 
       numberPair ASC;
     `,
@@ -88,7 +89,6 @@ exports.getScheduleEducatorResidents = (req, res) => {
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
             row.numberPair = timeIntervals[numberPair - 1];
           }
-
           if (row.chetnechet === 1) {
             schedule.numerator.push(row);
           } else if (row.chetnechet === 2) {
@@ -101,7 +101,6 @@ exports.getScheduleEducatorResidents = (req, res) => {
     }
   );
 };
-
 
 exports.getScheduleEducatorExtramuralist = (req, res) => {
   const { id_prep } = req.body;
