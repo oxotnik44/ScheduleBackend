@@ -110,7 +110,7 @@ exports.getScheduleEducatorExtramuralist = (req, res) => {
     SELECT
     dek_zgroup_predmet.id AS idPair,
     dek_room.number AS roomNumber,
-    dek_group.name AS groupName,
+    dek_zgroup.name AS groupName,
     NULL AS chetnechet,
     '' AS weekday,
     dek_zgroup_predmet.para AS numberPair,
@@ -118,7 +118,7 @@ exports.getScheduleEducatorExtramuralist = (req, res) => {
     dek_zgroup_predmet.predmet AS namePair,
     dek_zgroup_predmet.date AS date
   FROM dek_zgroup_predmet
-  LEFT JOIN dek_group ON dek_group.id = dek_zgroup_predmet.id_group
+  LEFT JOIN dek_zgroup ON dek_zgroup.id = dek_zgroup_predmet.id_group
   LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
   LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
   WHERE dek_zgroup_predmet.id_prep = ${id_prep}
