@@ -41,7 +41,8 @@ exports.getScheduleStudent = (req, res) => {
           ' ',
           UPPER(LEFT(SUBSTRING_INDEX(dek_prepod.name, ' ', -2), 1)),
           '.',
-          UPPER(LEFT(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1))
+          UPPER(LEFT(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1)),
+          '.'
         ) AS nameEducator,
         dek_group_predmet.id_prep AS idEducator,
         dek_prepod.regalia AS regaliaEducator,
