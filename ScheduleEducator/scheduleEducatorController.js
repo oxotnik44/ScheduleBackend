@@ -27,6 +27,7 @@ exports.getScheduleEducatorResidents = (req, res) => {
       dek_group_predmet.id AS idPair,
       dek_room.number AS roomNumber,
       dek_group.name AS groupName,
+      dek_group.id AS idGroup,
       dek_group_predmet.chetnechet,
       CASE
         WHEN dek_group_predmet.day = 1 THEN 'Понедельник'
@@ -110,6 +111,7 @@ exports.getScheduleEducatorExtramuralist = (req, res) => {
     SELECT
     dek_zgroup_predmet.id AS idPair,
     dek_room.number AS roomNumber,
+    dek_zgroup.id AS idGroup,
     dek_zgroup.name AS groupName,
     NULL AS chetnechet,
     '' AS weekday,

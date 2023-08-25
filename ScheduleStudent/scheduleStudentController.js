@@ -44,6 +44,7 @@ exports.getScheduleStudent = (req, res) => {
           UPPER(LEFT(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1)),
           '.'
         ) AS nameEducator,
+        dek_prepod.name AS fullNameEducator,
         dek_group_predmet.id_prep AS idEducator,
         dek_prepod.regalia AS regaliaEducator,
         NULL AS date,
@@ -76,6 +77,7 @@ exports.getScheduleStudent = (req, res) => {
           '.',
           UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1, 1))
         ) AS nameEducator,
+        dek_prepod.name AS fullNameEducator,
         dek_zgroup_predmet.id_prep AS idEducator,
         dek_prepod.regalia AS regaliaEducator,
         dek_zgroup_predmet.date AS date,
