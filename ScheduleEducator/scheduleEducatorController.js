@@ -25,6 +25,7 @@ exports.getScheduleEducatorResidents = (req, res) => {
     `
     SELECT
       dek_group_predmet.id AS idPair,
+      dek_group_predmet.zal AS comments,
       dek_room.number AS roomNumber,
       dek_group.name AS groupName,
       dek_group.id AS idGroup,
@@ -110,6 +111,7 @@ exports.getScheduleEducatorExtramuralist = (req, res) => {
     `
     SELECT
     dek_zgroup_predmet.id AS idPair,
+    dek_zgroup_predmet.zal AS comments,
     dek_room.number AS roomNumber,
     dek_zgroup.id AS idGroup,
     dek_zgroup.name AS groupName,

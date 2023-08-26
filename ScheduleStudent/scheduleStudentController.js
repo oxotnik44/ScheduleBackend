@@ -18,6 +18,7 @@ exports.getScheduleStudent = (req, res) => {
     `SELECT * FROM (
       SELECT
         dek_group_predmet.id AS idPair,
+        dek_group_predmet.zal AS comments,
         dek_room.number AS roomNumber,
         CASE
             WHEN dek_group_predmet.chetnechet IN (1, 2) THEN dek_group_predmet.chetnechet
@@ -64,6 +65,7 @@ exports.getScheduleStudent = (req, res) => {
       
       SELECT
         dek_zgroup_predmet.id AS idPair,
+        dek_zgroup_predmet.zal AS comments,
         dek_room.number AS roomNumber,
         NULL AS chetnechet,
         '' AS weekday,
