@@ -126,6 +126,8 @@ exports.getScheduleStudent = (req, res) => {
           denominator: [],
         };
         const scheduleExtramural = [];
+        const currentDate = moment(); // Текущая дата
+        const oneMonthLater = currentDate.clone().add(1, "month"); // Дата через месяц
 
         rows.forEach((row) => {
           const numberPair = row.numberPair;
@@ -134,7 +136,11 @@ exports.getScheduleStudent = (req, res) => {
           }
 
           if (row.date) {
-            row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+            const rowDate = moment(row.date);
+            if (rowDate.isBetween(currentDate, oneMonthLater)) {
+              row.date = rowDate.locale("ru").format("D MMMM YYYY");
+              scheduleExtramural.push(row);
+            }
           }
 
           if (row.weekday) {

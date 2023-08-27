@@ -10,4 +10,7 @@ module.exports = (app) => {
   app
     .route("/getScheduleEducatorExtramuralist")
     .post(scheduleEducatorController.getScheduleEducatorExtramuralist);
+  app
+    .route("/getCombinedSchedule")
+    .post(scheduleEducatorController.getCombinedSchedule);
 };
