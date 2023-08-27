@@ -6,5 +6,7 @@ module.exports = (app) => {
   app
     .route("/getScheduleStudent")
     .post(scheduleStudentController.getScheduleStudent);
-   
+  app
+    .route("/getScheduleExtramuralist")
+    .post(scheduleStudentController.getScheduleExtramuralist);
 };
