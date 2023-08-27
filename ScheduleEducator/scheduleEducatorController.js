@@ -291,7 +291,7 @@ exports.getScheduleEducator = (req, res) => {
     }
   );
 };
-exports.getScheduleEducatorExtramuralist = (req, res) => {
+exports.getScheduleEducatorExtramural = (req, res) => {
   const { id_prep } = req.body;
 
   db.query(
