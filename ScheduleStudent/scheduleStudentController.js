@@ -60,7 +60,6 @@ exports.getScheduleStudent = (req, res) => {
       LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_group_predmet.lek_sem
       WHERE dek_group_predmet.id_group = ${id_group}
         AND dek_group_predmet.id_prep != -1
-      
       UNION
       
       SELECT
@@ -91,6 +90,7 @@ exports.getScheduleStudent = (req, res) => {
       LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
       WHERE dek_zgroup_predmet.id_group = ${id_group}
         AND dek_zgroup_predmet.id_prep != -1
+        AND dek_zgroup_predmet.date >= CURDATE() -- Добавляем условие для текущей даты
     ) AS subquery
     ORDER BY 
       
@@ -116,8 +116,6 @@ exports.getScheduleStudent = (req, res) => {
           denominator: [],
         };
         const scheduleExtramural = [];
-        const currentDate = moment(); // Текущая дата
-        const oneMonthLater = currentDate.clone().add(1, "month"); // Дата через месяц
 
         rows.forEach((row) => {
           const numberPair = row.numberPair;
@@ -126,11 +124,8 @@ exports.getScheduleStudent = (req, res) => {
           }
 
           if (row.date) {
-            const rowDate = moment(row.date);
-            if (rowDate.isBetween(currentDate, oneMonthLater)) {
-              row.date = rowDate.locale("ru").format("D MMMM YYYY");
-              scheduleExtramural.push(row);
-            }
+            row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+            scheduleExtramural.push(row);
           }
 
           if (row.weekday) {

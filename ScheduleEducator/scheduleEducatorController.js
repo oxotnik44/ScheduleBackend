@@ -51,8 +51,8 @@ exports.getEducator = (req, res) => {
 //       AND dek_group_predmet.id_prep != -1
 //       AND dek_group_predmet.day <= 6
 //       AND dek_group_predmet.chetnechet IN (1, 2)
-//       AND dek_group.name NOT LIKE '%скрытая%' 
-//     ORDER BY 
+//       AND dek_group.name NOT LIKE '%скрытая%'
+//     ORDER BY
 //       CASE WHEN weekday = 'Понедельник' THEN 1
 //            WHEN weekday = 'Вторник' THEN 2
 //            WHEN weekday = 'Среда' THEN 3
@@ -61,9 +61,9 @@ exports.getEducator = (req, res) => {
 //            WHEN weekday = 'Суббота' THEN 6
 //            WHEN weekday = 'Воскресенье' THEN 7
 //            ELSE 8
-//       END ASC, 
-//       chetnechet ASC, 
-//       date ASC, 
+//       END ASC,
+//       chetnechet ASC,
+//       date ASC,
 //       numberPair ASC;
 //     `,
 //     (error, rows) => {
@@ -127,7 +127,7 @@ exports.getEducator = (req, res) => {
 //   LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
 //   WHERE dek_zgroup_predmet.id_prep = ${id_prep}
 //     AND dek_zgroup_predmet.id_prep != -1
-//   ORDER BY 
+//   ORDER BY
 //     CASE WHEN weekday = 'Понедельник' THEN 1
 //          WHEN weekday = 'Вторник' THEN 2
 //          WHEN weekday = 'Среда' THEN 3
@@ -136,8 +136,8 @@ exports.getEducator = (req, res) => {
 //          WHEN weekday = 'Суббота' THEN 6
 //          WHEN weekday = 'Воскресенье' THEN 7
 //          ELSE 8
-//     END ASC, 
-//     date ASC, 
+//     END ASC,
+//     date ASC,
 //     numberPair ASC
 //     `,
 //     (error, rows) => {
@@ -171,7 +171,6 @@ exports.getEducator = (req, res) => {
 //     }
 //   );
 // };
-
 
 exports.getScheduleEducator = (req, res) => {
   const { id_prep } = req.body;
@@ -231,6 +230,7 @@ exports.getScheduleEducator = (req, res) => {
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
     WHERE dek_zgroup_predmet.id_prep = ${id_prep}
       AND dek_zgroup_predmet.id_prep != -1
+      AND dek_zgroup_predmet.date >= CURDATE() -- Добавляем условие для текущей даты
     ORDER BY 
       date ASC, 
       numberPair ASC;
@@ -254,9 +254,6 @@ exports.getScheduleEducator = (req, res) => {
         console.log(error);
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
-        const currentDate = moment(); // Текущая дата
-        const oneMonthLater = currentDate.clone().add(1, 'month'); // Дата через месяц
-
         rows.forEach((row) => {
           const numberPair = row.numberPair;
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
@@ -264,19 +261,16 @@ exports.getScheduleEducator = (req, res) => {
           }
 
           // Определение, куда добавлять данные
-          if (row.scheduleType === 'resident') {
+          if (row.scheduleType === "resident") {
             if (row.chetnechet === 1) {
               scheduleResident.numerator.push(row);
             } else if (row.chetnechet === 2) {
               scheduleResident.denominator.push(row);
             }
-          } else if (row.scheduleType === 'extramural') {
+          } else if (row.scheduleType === "extramural") {
             if (row.date) {
-              const rowDate = moment(row.date);
-              if (rowDate.isBetween(currentDate, oneMonthLater)) {
-                row.date = rowDate.locale("ru").format("D MMMM YYYY");
-                scheduleExtramural.push(row);
-              }
+              row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+              scheduleExtramural.push(row);
             }
           }
         });
