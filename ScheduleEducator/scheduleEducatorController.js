@@ -250,6 +250,8 @@ exports.getScheduleEducator = (req, res) => {
         denominator: [],
       };
       const scheduleExtramural = [];
+      const extramuralGroupsByDate = {}; // Объект для группировки заочных пар по дате
+
       if (error) {
         console.log(error);
         res.status(500).json({ error: "Произошла ошибка" });
@@ -270,9 +272,20 @@ exports.getScheduleEducator = (req, res) => {
           } else if (row.scheduleType === "extramural") {
             if (row.date) {
               row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
-              scheduleExtramural.push(row);
+              if (!extramuralGroupsByDate[row.date]) {
+                extramuralGroupsByDate[row.date] = [];
+              }
+              extramuralGroupsByDate[row.date].push(row);
             }
           }
+        });
+
+        // Создание блоков с объединенными парыми по дате для заочных
+        Object.entries(extramuralGroupsByDate).forEach(([date, items]) => {
+          scheduleExtramural.push({
+            date,
+            items,
+          });
         });
 
         const result = {

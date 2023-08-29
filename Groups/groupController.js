@@ -48,28 +48,6 @@ exports.getGroupsExtramuralists = (req, res) => {
     }
   );
 };
-exports.getGroups = (req, res) => {
-  const { nameGroup } = req.body;
-
-  // Формируем шаблон для поиска схожих названий групп
-  const searchPattern = `%${nameGroup}%`;
-
-  db.query(
-    `SELECT name, id
-    FROM dek_group
-    WHERE name 
-
-    UNION
-
-    SELECT name, id
-    FROM dek_zgroup
-    WHERE name `,
-
-    (error, rows) => {
-      res.status(200).json(rows)
-    }
-  );
-};
 
 exports.getGroups = (req, res) => {
   db.query(
