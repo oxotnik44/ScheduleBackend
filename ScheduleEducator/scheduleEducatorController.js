@@ -281,10 +281,10 @@ exports.getScheduleEducator = (req, res) => {
         });
 
         // Создание блоков с объединенными парыми по дате для заочных
-        Object.entries(extramuralGroupsByDate).forEach(([date, items]) => {
+        Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
           scheduleExtramural.push({
             date,
-            items,
+            schedule,
           });
         });
 
