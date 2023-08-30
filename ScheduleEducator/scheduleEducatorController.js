@@ -321,7 +321,7 @@ exports.getScheduleEducatorExtramural = (req, res) => {
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
     WHERE dek_zgroup_predmet.id_prep = ${id_prep}
       AND dek_zgroup_predmet.id_prep != -1
-      AND dek_zgroup_predmet.date <= CURDATE() -- Добавляем условие для текущей даты
+      AND dek_zgroup_predmet.date  -- Добавляем условие для текущей даты
     ORDER BY 
       date ASC, 
       numberPair ASC;
