@@ -116,6 +116,7 @@ exports.getScheduleStudent = (req, res) => {
           denominator: [],
         };
         const scheduleExtramural = [];
+        const extramuralGroupsByDate = {}; 
 
         rows.forEach((row) => {
           const numberPair = row.numberPair;
@@ -125,7 +126,10 @@ exports.getScheduleStudent = (req, res) => {
 
           if (row.date) {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
-            scheduleExtramural.push(row);
+            if (!extramuralGroupsByDate[row.date]) {
+              extramuralGroupsByDate[row.date] = [];
+            }
+            extramuralGroupsByDate[row.date].push(row);
           }
 
           if (row.weekday) {
@@ -145,7 +149,12 @@ exports.getScheduleStudent = (req, res) => {
             scheduleExtramural.push(row);
           }
         });
-
+        Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
+          scheduleExtramural.push({
+            date,
+            schedule,
+          });
+        });
         const result = {
           scheduleResident,
           scheduleExtramural,
