@@ -336,6 +336,12 @@ exports.getScheduleEducatorExtramural = (req, res) => {
         "17:30-19:00",
         "19:10-20:40",
       ];
+      const scheduleResident = {
+        numerator: [],
+        denominator: [],
+      };
+      const scheduleExtramural = [];
+      const extramuralGroupsByDate = {}; // Объект для группировки заочных пар по дате
 
       if (error) {
         console.log(error);
@@ -349,10 +355,24 @@ exports.getScheduleEducatorExtramural = (req, res) => {
 
           if (row.date) {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+            if (!extramuralGroupsByDate[row.date]) {
+              extramuralGroupsByDate[row.date] = [];
+            }
+            extramuralGroupsByDate[row.date].push(row);
           }
         });
+        Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
+          scheduleExtramural.push({
+            date,
+            schedule,
+          });
+        });
 
-        res.status(200).json(rows);
+        const result = {
+          scheduleResident,
+          scheduleExtramural,
+        };
+        res.status(200).json(result);
       }
     }
   );
