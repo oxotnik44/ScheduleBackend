@@ -321,7 +321,7 @@ exports.getScheduleEducatorExtramural = (req, res) => {
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
     WHERE dek_zgroup_predmet.id_prep = ${id_prep}
       AND dek_zgroup_predmet.id_prep != -1
-      AND dek_zgroup_predmet.date  -- Добавляем условие для текущей даты
+      AND dek_zgroup_predmet.date -- Добавляем условие для текущей даты
     ORDER BY 
       date ASC, 
       numberPair ASC;
@@ -336,12 +336,6 @@ exports.getScheduleEducatorExtramural = (req, res) => {
         "17:30-19:00",
         "19:10-20:40",
       ];
-      const scheduleResident = {
-        numerator: [],
-        denominator: [],
-      };
-      const scheduleExtramural = [];
-      const extramuralGroupsByDate = {}; // Объект для группировки заочных пар по дате
 
       if (error) {
         console.log(error);
@@ -355,24 +349,10 @@ exports.getScheduleEducatorExtramural = (req, res) => {
 
           if (row.date) {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
-            if (!extramuralGroupsByDate[row.date]) {
-              extramuralGroupsByDate[row.date] = [];
-            }
-            extramuralGroupsByDate[row.date].push(row);
           }
         });
-        Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
-          scheduleExtramural.push({
-            date,
-            schedule,
-          });
-        });
 
-        const result = {
-          scheduleResident,
-          scheduleExtramural,
-        };
-        res.status(200).json(result);
+        res.status(200).json(rows);
       }
     }
   );
