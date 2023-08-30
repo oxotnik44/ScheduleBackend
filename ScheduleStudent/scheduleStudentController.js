@@ -17,7 +17,7 @@ exports.getScheduleStudent = (req, res) => {
   db.query(
     `SELECT * FROM (
       SELECT
-    'resident' AS scheduleType,
+    'resident' AS groupType,
         dek_group_predmet.id AS idPair,
         dek_group_predmet.zal AS comments,
         dek_room.number AS roomNumber,
@@ -64,7 +64,7 @@ exports.getScheduleStudent = (req, res) => {
       UNION
       
       SELECT
-    'extramural' AS scheduleType,
+    'extramural' AS groupType,
         dek_zgroup_predmet.id AS idPair,
         dek_zgroup_predmet.zal AS comments,
         dek_room.number AS roomNumber,
@@ -158,6 +158,7 @@ exports.getScheduleStudent = (req, res) => {
           });
         });
         const result = {
+          groupType: rows.length > 0 ? rows[0].groupType : '', // Берем тип группы из первой строки
           scheduleResident,
           scheduleExtramural,
         };
