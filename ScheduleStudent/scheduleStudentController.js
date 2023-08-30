@@ -17,6 +17,7 @@ exports.getScheduleStudent = (req, res) => {
   db.query(
     `SELECT * FROM (
       SELECT
+    'resident' AS scheduleType,
         dek_group_predmet.id AS idPair,
         dek_group_predmet.zal AS comments,
         dek_room.number AS roomNumber,
@@ -63,6 +64,7 @@ exports.getScheduleStudent = (req, res) => {
       UNION
       
       SELECT
+    'extramural' AS scheduleType,
         dek_zgroup_predmet.id AS idPair,
         dek_zgroup_predmet.zal AS comments,
         dek_room.number AS roomNumber,
@@ -116,7 +118,7 @@ exports.getScheduleStudent = (req, res) => {
           denominator: [],
         };
         const scheduleExtramural = [];
-        const extramuralGroupsByDate = {}; 
+        const extramuralGroupsByDate = {};
 
         rows.forEach((row) => {
           const numberPair = row.numberPair;
