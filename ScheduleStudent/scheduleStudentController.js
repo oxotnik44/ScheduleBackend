@@ -147,9 +147,7 @@ exports.getScheduleStudent = (req, res) => {
                 scheduleResident.denominator.push(row);
               }
             }
-          } else {
-            scheduleExtramural.push(row);
-          }
+          } 
         });
         Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
           scheduleExtramural.push({
