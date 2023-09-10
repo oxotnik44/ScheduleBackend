@@ -8,6 +8,6 @@ module.exports = (app) => {
     .route("/getScheduleEducator")
     .post(scheduleEducatorController.getScheduleEducator);
   app
-    .route("/getScheduleEducatorExtramural")
-    .post(scheduleEducatorController.getScheduleEducatorExtramural);
+    .route("/getFullScheduleEducatorExtramural")
+    .post(scheduleEducatorController.getFullScheduleEducatorExtramural);
 };

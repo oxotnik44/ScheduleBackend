@@ -298,12 +298,13 @@ exports.getScheduleEducator = (req, res) => {
     }
   );
 };
-exports.getScheduleEducatorExtramural = (req, res) => {
+exports.getFullScheduleEducatorExtramural = (req, res) => {
   const { id_prep } = req.body;
 
   db.query(
     `
     SELECT
+    'extramural' AS groupType,
       dek_zgroup_predmet.id AS idPair,
       dek_zgroup_predmet.zal AS comments,
       dek_room.number AS roomNumber,
@@ -321,7 +322,7 @@ exports.getScheduleEducatorExtramural = (req, res) => {
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
     WHERE dek_zgroup_predmet.id_prep = ${id_prep}
       AND dek_zgroup_predmet.id_prep != -1
-      AND dek_zgroup_predmet.date -- Добавляем условие для текущей даты
+      AND dek_zgroup_predmet.date 
     ORDER BY 
       date ASC, 
       numberPair ASC;
@@ -341,6 +342,8 @@ exports.getScheduleEducatorExtramural = (req, res) => {
         console.log(error);
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
+        const scheduleExtramural = [];
+        const extramuralGroupsByDate = {};
         rows.forEach((row) => {
           const numberPair = row.numberPair;
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
@@ -349,10 +352,23 @@ exports.getScheduleEducatorExtramural = (req, res) => {
 
           if (row.date) {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+            if (!extramuralGroupsByDate[row.date]) {
+              extramuralGroupsByDate[row.date] = [];
+            }
+            extramuralGroupsByDate[row.date].push(row);
           }
         });
-
-        res.status(200).json(rows);
+        Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
+          scheduleExtramural.push({
+            date,
+            schedule,
+          });
+        });
+        const result = {
+          groupType: rows.length > 0 ? rows[0].groupType : "",
+          scheduleExtramural,
+        };
+        res.status(200).json(result);
       }
     }
   );

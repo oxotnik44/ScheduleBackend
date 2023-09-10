@@ -147,8 +147,6 @@ exports.getScheduleStudent = (req, res) => {
                 scheduleResident.denominator.push(row);
               }
             }
-          } else {
-            scheduleExtramural.push(row);
           }
         });
         Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
@@ -158,7 +156,7 @@ exports.getScheduleStudent = (req, res) => {
           });
         });
         const result = {
-          groupType: rows.length > 0 ? rows[0].groupType : '', // Берем тип группы из первой строки
+          groupType: rows.length > 0 ? rows[0].groupType : "", // Берем тип группы из первой строки
           scheduleResident,
           scheduleExtramural,
         };
@@ -168,12 +166,14 @@ exports.getScheduleStudent = (req, res) => {
     }
   );
 };
-exports.getScheduleExtramuralist = (req, res) => {
+exports.getFullScheduleExtramuralist = (req, res) => {
   const { id_group } = req.body;
 
   db.query(
     `
     SELECT
+    'extramural' AS groupType,
+
       dek_zgroup_predmet.id AS idPair,
       dek_zgroup_predmet.zal AS comments,
       dek_room.number AS roomNumber,
@@ -198,7 +198,7 @@ exports.getScheduleExtramuralist = (req, res) => {
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
     WHERE dek_zgroup_predmet.id_group = ${id_group}
       AND dek_zgroup_predmet.id_prep != -1
-      AND dek_zgroup_predmet.date <= CURDATE()
+      AND dek_zgroup_predmet.date 
     ORDER BY 
       date ASC, 
       numberPair ASC;
@@ -218,6 +218,7 @@ exports.getScheduleExtramuralist = (req, res) => {
         res.status(500).json({ error: "Произошла ошибка" });
       } else {
         const scheduleExtramural = [];
+        const extramuralGroupsByDate = {};
 
         rows.forEach((row) => {
           const numberPair = row.numberPair;
@@ -226,14 +227,24 @@ exports.getScheduleExtramuralist = (req, res) => {
           }
 
           if (row.date) {
-            const rowDate = moment(row.date);
-            row.date = rowDate.locale("ru").format("D MMMM YYYY");
+            row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+            if (!extramuralGroupsByDate[row.date]) {
+              extramuralGroupsByDate[row.date] = [];
+            }
+            extramuralGroupsByDate[row.date].push(row);
           }
-
-          scheduleExtramural.push(row);
         });
-
-        res.status(200).json(scheduleExtramural);
+        Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
+          scheduleExtramural.push({
+            date,
+            schedule,
+          });
+        });
+        const result = {
+          groupType: rows.length > 0 ? rows[0].groupType : "",
+          scheduleExtramural,
+        };
+        res.status(200).json(result);
       }
     }
   );
