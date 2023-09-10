@@ -172,8 +172,6 @@ exports.getFullScheduleStudentExtramuralist = (req, res) => {
   db.query(
     `
     SELECT
-    'extramural' AS groupType,
-
       dek_zgroup_predmet.id AS idPair,
       dek_zgroup_predmet.zal AS comments,
       dek_room.number AS roomNumber,
@@ -240,11 +238,8 @@ exports.getFullScheduleStudentExtramuralist = (req, res) => {
             schedule,
           });
         });
-        const result = {
-          groupType: rows.length > 0 ? rows[0].groupType : "",
-          scheduleExtramural,
-        };
-        res.status(200).json(result);
+        
+        res.status(200).json(scheduleExtramural);
       }
     }
   );
