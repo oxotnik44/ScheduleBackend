@@ -166,7 +166,7 @@ exports.getScheduleStudent = (req, res) => {
     }
   );
 };
-exports.getFullScheduleExtramuralist = (req, res) => {
+exports.getFullScheduleStudentExtramuralist = (req, res) => {
   const { id_group } = req.body;
 
   db.query(
