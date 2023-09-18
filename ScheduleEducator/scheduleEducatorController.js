@@ -41,7 +41,6 @@ exports.getScheduleEducator = (req, res) => {
     WHEN dek_group_predmet.day = 6 THEN 'Суббота'
     ELSE ''
   END AS weekday,
-  NULL AS nameDepartments,
   dek_group_predmet.para AS numberPair,
   dek_cpoints.short AS typePair,
   dek_group_predmet.predmet AS namePair,
@@ -51,23 +50,22 @@ LEFT JOIN dek_group ON dek_group.id = dek_group_predmet.id_group
 LEFT JOIN dek_room ON dek_room.id = dek_group_predmet.id_room
 LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_group_predmet.lek_sem
 LEFT JOIN dek_dep ON dek_dep.id = ${id_prep}
-WHERE dek_group_predmet.id_prep != -1
+WHERE dek_group_predmet.id_prep = ${id_prep}
   AND dek_group_predmet.day <= 6
   AND dek_group_predmet.chetnechet IN (1, 2)
   AND dek_group.name NOT LIKE '%скрытая%'
 
-    UNION ALL
+    UNION 
     
-    SELECT
+    SELECT 
   'extramural' AS scheduleType,
   dek_zgroup_predmet.id AS idPair,
   dek_zgroup_predmet.zal AS comments,
   dek_room.number AS roomNumber,
   dek_zgroup.name AS groupName,
   dek_zgroup.id AS idGroup,
-  NULL AS chetnechet,           
+  NULL AS chetnechet,
   NULL AS weekday,
-  dep.name AS nameDepartments,  
   dek_zgroup_predmet.para AS numberPair,
   dek_cpoints.short AS typePair,
   dek_zgroup_predmet.predmet AS namePair,
@@ -76,13 +74,13 @@ FROM dek_zgroup_predmet
 LEFT JOIN dek_zgroup ON dek_zgroup.id = dek_zgroup_predmet.id_group
 LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
 LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
-LEFT JOIN dek_prepod_dep ON dek_prepod_dep.id_prepod = ${id_prep}
-LEFT JOIN dek_dep AS dep ON dep.id = dek_prepod_dep.id_dep
-WHERE dek_zgroup_predmet.id_prep != -1
-  AND dek_zgroup_predmet.date >= CURDATE() -- Добавляем условие для текущей даты
+WHERE dek_zgroup_predmet.id_prep = ${id_prep}
+  AND dek_zgroup_predmet.id_prep != -1
+  AND dek_zgroup_predmet.date >= CURDATE() 
 ORDER BY 
   date ASC, 
   numberPair ASC;
+
 
     `,
     (error, rows) => {
@@ -161,7 +159,6 @@ exports.getFullScheduleEducatorExtramural = (req, res) => {
       dek_zgroup.name AS groupName,
       NULL AS chetnechet,
       '' AS weekday,
-      dep.name AS nameDepartments,  
       dek_zgroup_predmet.para AS numberPair,
       dek_cpoints.short AS typePair,
       dek_zgroup_predmet.predmet AS namePair,
@@ -170,8 +167,6 @@ exports.getFullScheduleEducatorExtramural = (req, res) => {
     LEFT JOIN dek_zgroup ON dek_zgroup.id = dek_zgroup_predmet.id_group
     LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
-    LEFT JOIN dek_prepod_dep ON dek_prepod_dep.id_prepod = ${id_prep}
-    LEFT JOIN dek_dep AS dep ON dep.id = dek_prepod_dep.id_dep
     WHERE dek_zgroup_predmet.id_prep = ${id_prep}
       AND dek_zgroup_predmet.id_prep != -1
       AND dek_zgroup_predmet.date 
