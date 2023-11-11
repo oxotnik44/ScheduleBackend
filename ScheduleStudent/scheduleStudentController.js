@@ -91,7 +91,7 @@ exports.getScheduleStudent = (req, res) => {
       LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
       LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
       WHERE dek_zgroup_predmet.id_group = ${id_group}
-        AND dek_zgroup_predmet.id_prep != -1
+      ${id_group == 3430 ? "" : "AND dek_zgroup_predmet.id_prep != -1"}
         AND dek_zgroup_predmet.date >= CURDATE() -- Добавляем условие для текущей даты
     ) AS subquery
     ORDER BY 
@@ -195,7 +195,7 @@ exports.getFullScheduleStudentExtramuralist = (req, res) => {
     LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
     LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
     WHERE dek_zgroup_predmet.id_group = ${id_group}
-      AND dek_zgroup_predmet.id_prep != -1
+    ${id_group == 3430 ? "" : "AND dek_zgroup_predmet.id_prep != -1"}
       AND dek_zgroup_predmet.date 
     ORDER BY 
       date ASC, 
@@ -238,7 +238,7 @@ exports.getFullScheduleStudentExtramuralist = (req, res) => {
             schedule,
           });
         });
-        
+
         res.status(200).json(scheduleExtramural);
       }
     }
