@@ -166,6 +166,55 @@ exports.getScheduleStudent = (req, res) => {
     }
   );
 };
+exports.getSessionScheduleStudent = (req, res) => {
+  const { id_group } = req.body;
+  const currentWeek = getWeekNumber();
+
+  db.query(
+    `
+      SELECT
+        dek_sgroup_predmet.id AS idPair,
+        dek_sgroup_predmet.zal AS comments,
+        dek_room.number AS roomNumber,
+        dek_sgroup_predmet.para AS numberPair,
+        dek_cpoints.short AS typePair,
+        dek_sgroup_predmet.predmet AS namePair,
+        CONCAT(
+          SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
+          ' ',
+          UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -2), 1, 1)),
+          '.',
+          UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1, 1))
+        ) AS nameEducator,
+        dek_prepod.name AS fullNameEducator,
+        dek_sgroup_predmet.id_prep AS idEducator,
+        dek_prepod.regalia AS regaliaEducator,
+        dek_sgroup_predmet.date AS date,
+        ${currentWeek} AS weekNumber,
+      FROM dek_zgroup_predmet
+      LEFT JOIN dek_prepod ON dek_prepod.id = dek_zgroup_predmet.id_prep
+      LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
+      LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
+      WHERE dek_sgroup_predmet.id_group = ${id_group}
+      AND dek_sgroup_predmet.date >= CURDATE() -- Добавляем условие для текущей даты
+    ORDER BY 
+      date ASC, 
+      numberPair ASC
+    `,
+    (error, rows) => {
+      if (error) {
+        console.log(error);
+        res.status(500).json({ error: "Произошла ошибка" });
+      } else {
+        const result = {
+          sessionScheduleStudent: rows,
+        };
+
+        res.status(200).json(result);
+      }
+    }
+  );
+};
 exports.getFullScheduleStudentExtramuralist = (req, res) => {
   const { id_group } = req.body;
 
