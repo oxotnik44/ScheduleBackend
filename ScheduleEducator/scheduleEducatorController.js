@@ -26,6 +26,7 @@ exports.getScheduleEducator = (req, res) => {
     `
     SELECT
   'resident' AS scheduleType,
+  dek_settings.value AS weekCorrection,
   dek_group_predmet.id AS idPair,
   dek_group_predmet.zal AS comments,
   dek_room.number AS roomNumber,
@@ -49,6 +50,7 @@ FROM dek_group_predmet
 LEFT JOIN dek_group ON dek_group.id = dek_group_predmet.id_group
 LEFT JOIN dek_room ON dek_room.id = dek_group_predmet.id_room
 LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_group_predmet.lek_sem
+LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
 LEFT JOIN dek_dep ON dek_dep.id = ${id_prep}
 WHERE dek_group_predmet.id_prep = ${id_prep}
   AND dek_group_predmet.day <= 6
@@ -59,6 +61,7 @@ WHERE dek_group_predmet.id_prep = ${id_prep}
     
     SELECT 
   'extramural' AS scheduleType,
+  dek_settings.value AS weekCorrection,
   dek_zgroup_predmet.id AS idPair,
   dek_zgroup_predmet.zal AS comments,
   dek_room.number AS roomNumber,
@@ -74,9 +77,12 @@ FROM dek_zgroup_predmet
 LEFT JOIN dek_zgroup ON dek_zgroup.id = dek_zgroup_predmet.id_group
 LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
 LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
+LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
+
 WHERE dek_zgroup_predmet.id_prep = ${id_prep}
   AND dek_zgroup_predmet.id_prep != -1
   AND dek_zgroup_predmet.date >= CURDATE() 
+
 ORDER BY 
   date ASC, 
   numberPair ASC;
@@ -94,6 +100,7 @@ ORDER BY
         "19:10-20:40",
       ];
       const scheduleResident = {
+        weekCorrection: rows[0].weekCorrection,
         numerator: [],
         denominator: [],
       };

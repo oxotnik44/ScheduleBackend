@@ -9,7 +9,5 @@ module.exports = (app) => {
   app
     .route("/getFullScheduleStudentExtramuralist")
     .post(scheduleStudentController.getFullScheduleStudentExtramuralist);
-  app
-    .route("/getSessionScheduleStudent")
-    .post(scheduleStudentController.getSessionScheduleStudent);
+ 
 };
