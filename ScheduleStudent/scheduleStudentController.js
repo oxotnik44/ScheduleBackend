@@ -10,7 +10,7 @@ function getWeekNumber() {
 }
 
 exports.getScheduleStudent = (req, res) => {
-  const { id_group } = req.body;
+  const { id_group, name } = req.body;
   const currentWeek = getWeekNumber();
   const nextWeek = currentWeek === 4 ? 1 : currentWeek + 1;
 
@@ -20,8 +20,10 @@ exports.getScheduleStudent = (req, res) => {
     'resident' AS groupType,
     dek_settings.value AS weekCorrection,
         dek_group_predmet.id AS idPair,
+        dek_group.name AS nameGroup,
         dek_group_predmet.zal AS comments,
         dek_room.number AS roomNumber,
+        NULL AS roomName,
         CASE
             WHEN dek_group_predmet.chetnechet IN (1, 2) THEN dek_group_predmet.chetnechet
             ELSE NULL
@@ -36,8 +38,10 @@ exports.getScheduleStudent = (req, res) => {
             WHEN dek_group_predmet.day = 7 THEN 'Воскресенье'
             ELSE ''
         END AS weekday,
+        FALSE AS isSession,
         dek_group_predmet.para AS numberPair,
         dek_cpoints.short AS typePair,
+        NULL AS typePairRetake,
         dek_group_predmet.predmet AS namePair,
         CONCAT(
           SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
@@ -61,6 +65,8 @@ exports.getScheduleStudent = (req, res) => {
       LEFT JOIN dek_room ON dek_room.id = dek_group_predmet.id_room
       LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_group_predmet.lek_sem
       LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
+      LEFT JOIN dek_group ON dek_group.id = ${id_group}
+      
       WHERE dek_group_predmet.id_group = ${id_group}
         AND dek_group_predmet.id_prep != -1
       UNION
@@ -69,12 +75,16 @@ exports.getScheduleStudent = (req, res) => {
     'extramural' AS groupType,
     null AS weekCorrection,
         dek_zgroup_predmet.id AS idPair,
+        dek_zgroup.name AS nameGroup,
         dek_zgroup_predmet.zal AS comments,
         dek_room.number AS roomNumber,
+       NULL AS roomName,
         NULL AS chetnechet,
         NULL AS weekday,
+        FALSE AS isSession,
         dek_zgroup_predmet.para AS numberPair,
         dek_cpoints.short AS typePair,
+        NULL AS typePairRetake,
         dek_zgroup_predmet.predmet AS namePair,
         CONCAT(
           SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
@@ -93,9 +103,46 @@ exports.getScheduleStudent = (req, res) => {
       LEFT JOIN dek_prepod ON dek_prepod.id = dek_zgroup_predmet.id_prep
       LEFT JOIN dek_room ON dek_room.id = dek_zgroup_predmet.id_room
       LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
+      LEFT JOIN dek_zgroup ON dek_zgroup.id = ${id_group}
       WHERE dek_zgroup_predmet.id_group = ${id_group}
       ${id_group == 3430 ? "" : "AND dek_zgroup_predmet.id_prep != -1"}
         AND dek_zgroup_predmet.date >= CURDATE() -- Добавляем условие для текущей даты
+
+      UNION
+      SELECT
+      'session' AS groupType,
+    null AS weekCorrection,
+    dek_sgroup_predmet.id AS idPair,
+    NULL AS nameGroup,
+    dek_sgroup_predmet.zal AS comments,
+    dek_room.number AS roomNumber,
+    dek_room.name AS roomName,
+    NULL AS chetnechet,
+    NULL AS weekday,
+    TRUE AS isSession,
+    dek_sgroup_predmet.time AS numberPair,
+    dek_cpoints.short AS typePair,
+    dek_cpoints.alt AS typePairRetake,
+    dek_sgroup_predmet.predmet AS namePair,
+    CONCAT(
+      SUBSTRING_INDEX(dek_prepod.name, ' ', 1),
+      ' ',
+      UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -2), 1, 1)),
+      '.',
+      UPPER(SUBSTRING(SUBSTRING_INDEX(dek_prepod.name, ' ', -1), 1, 1))
+    ) AS nameEducator,
+    dek_prepod.name AS fullNameEducator,
+    dek_sgroup_predmet.id_prep AS idEducator,
+    dek_prepod.regalia AS regaliaEducator,
+    dek_sgroup_predmet.date AS date,
+    NULL AS weekNumber,
+    NULL AS orderWeekday
+FROM dek_sgroup_predmet
+LEFT JOIN dek_prepod ON dek_prepod.id = dek_sgroup_predmet.id_prep
+LEFT JOIN dek_room ON dek_room.id = dek_sgroup_predmet.id_room
+LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_sgroup_predmet.zach_exam
+WHERE dek_sgroup_predmet.id_group = ${id_group}
+    AND dek_sgroup_predmet.date >= CURDATE()
     ) AS subquery
     ORDER BY 
       
@@ -120,36 +167,71 @@ exports.getScheduleStudent = (req, res) => {
           weekCorrection: rows.length > 0 ? rows[0].weekCorrection : null,
           numerator: [],
           denominator: [],
+          session: [],
         };
-        
+
         const scheduleExtramural = [];
         const extramuralGroupsByDate = {};
-
+        const sessionGroups = {};
+        const result = {
+          groupType: "", // Инициализируем groupType пустой строкой или значением по умолчанию
+          scheduleResident,
+          scheduleExtramural,
+        };
         rows.forEach((row) => {
           const numberPair = row.numberPair;
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
             row.numberPair = timeIntervals[numberPair - 1];
           }
-
-          if (row.date) {
+          if (row.groupType === "session") {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
-            if (!extramuralGroupsByDate[row.date]) {
-              extramuralGroupsByDate[row.date] = [];
-            }
-            extramuralGroupsByDate[row.date].push(row);
-          }
+            if (row.isSession) {
+              const formattedNumberPair = moment(row.numberPair, [
+                "HH:mm",
+                "HH.mm",
+                "HH-mm",
+              ]).format("HH:mm");
 
-          if (row.weekday) {
-            if (
-              (row.chetnechet === 1 && row.weekNumber === currentWeek) ||
-              (row.chetnechet === 2 && row.weekNumber === currentWeek) ||
-              (row.chetnechet === 1 && row.weekNumber === nextWeek) ||
-              (row.chetnechet === 2 && row.weekNumber === nextWeek)
-            ) {
-              if (row.chetnechet === 1) {
-                scheduleResident.numerator.push(row);
-              } else {
-                scheduleResident.denominator.push(row);
+              row.numberPair = formattedNumberPair;
+
+              if (row.typePairRetake) {
+                row.typePairRetake = row.typePairRetake.replace(
+                  /<\/?i>|<\/?b>/g,
+                  ""
+                );
+              }
+
+              if (!sessionGroups[row.date]) {
+                sessionGroups[row.date] = [];
+              }
+              sessionGroups[row.date].push(row);
+            }
+          }
+          if (row.groupType === "extramural" && row.nameGroup === name) {
+            result.groupType = "extramural";
+            if (row.date) {
+              row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+              if (!extramuralGroupsByDate[row.date]) {
+                extramuralGroupsByDate[row.date] = [];
+              }
+
+              extramuralGroupsByDate[row.date].push(row);
+            }
+          } else if (row.groupType === "resident" && row.nameGroup === name) {
+            result.groupType = "resident";
+
+            if (row.weekday) {
+              if (
+                (row.chetnechet === 1 && row.weekNumber === currentWeek) ||
+                (row.chetnechet === 2 && row.weekNumber === currentWeek) ||
+                (row.chetnechet === 1 && row.weekNumber === nextWeek) ||
+                (row.chetnechet === 2 && row.weekNumber === nextWeek)
+              ) {
+                if (row.chetnechet === 1) {
+                  scheduleResident.numerator.push(row);
+                } else {
+                  scheduleResident.denominator.push(row);
+                }
               }
             }
           }
@@ -160,18 +242,83 @@ exports.getScheduleStudent = (req, res) => {
             schedule,
           });
         });
-        const result = {
-          groupType: rows.length > 0 ? rows[0].groupType : "", // Берем тип группы из первой строки
-          scheduleResident,
-          scheduleExtramural,
-        };
+        Object.entries(sessionGroups).forEach(([date, schedule]) => {
+          scheduleResident.session.push({
+            date,
+            schedule,
+          });
+        });
 
         res.status(200).json(result);
       }
     }
   );
 };
+exports.getScheduleSessionStudent = (req, res) => {
+  const { id_group } = req.body;
+  db.query(
+    `
+    SELECT
+    dek_sgroup_predmet.id AS idPair,
+    dek_sgroup_predmet.zal AS comments,
+    dek_room.number AS roomNumber,
+    dek_sgroup_predmet.time AS numberPair,
+    dek_cpoints.short AS typePair,
+    dek_cpoints.alt AS typePairRetake,
+    dek_sgroup_predmet.predmet AS namePair,
+    dek_prepod.name AS fullNameEducator,
+    dek_sgroup_predmet.id_prep AS idEducator,
+    dek_prepod.regalia AS regaliaEducator,
+    dek_sgroup_predmet.date AS date
+FROM dek_sgroup_predmet
+LEFT JOIN dek_prepod ON dek_prepod.id = dek_sgroup_predmet.id_prep
+LEFT JOIN dek_room ON dek_room.id = dek_sgroup_predmet.id_room
+LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_sgroup_predmet.zach_exam
+WHERE dek_sgroup_predmet.id_group = ${id_group}
+    AND dek_sgroup_predmet.date >= CURDATE()
+ORDER BY 
+date ASC, numberPair ASC
+      `,
+    (error, rows) => {
+      if (error) {
+        console.log(error);
+        res.status(500).json({ error: "Произошла ошибка" });
+      } else {
+        const scheduleSession = {
+          groupType: "resident",
+          session: [],
+        };
 
+        const extramuralGroupsByDate = {};
+
+        rows.forEach((row) => {
+          if (row.date) {
+            row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+            if (!extramuralGroupsByDate[row.date]) {
+              extramuralGroupsByDate[row.date] = [];
+            }
+
+            const formattedNumberPair = moment(row.numberPair, [
+              "HH:mm",
+              "HH.mm",
+              "HH-mm",
+            ]).format("HH:mm");
+
+            row.numberPair = formattedNumberPair;
+
+            // Внесение изменений: добавляем groupType на самый верхний уровень
+            scheduleSession.session.push({
+              date: row.date,
+              schedule: [row],
+            });
+          }
+        });
+
+        res.status(200).json(scheduleSession);
+      }
+    }
+  );
+};
 exports.getFullScheduleStudentExtramuralist = (req, res) => {
   const { id_group } = req.body;
 
