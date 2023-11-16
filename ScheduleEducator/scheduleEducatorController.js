@@ -30,6 +30,7 @@ exports.getScheduleEducator = (req, res) => {
   dek_group_predmet.id AS idPair,
   dek_group_predmet.zal AS comments,
   dek_room.number AS roomNumber,
+  NULL AS roomName,
   dek_group.name AS groupName,
   dek_group.id AS idGroup,
   dek_group_predmet.chetnechet,
@@ -42,8 +43,10 @@ exports.getScheduleEducator = (req, res) => {
     WHEN dek_group_predmet.day = 6 THEN 'Суббота'
     ELSE ''
   END AS weekday,
+  FALSE AS isSession,
   dek_group_predmet.para AS numberPair,
   dek_cpoints.short AS typePair,
+  NULL AS typePairRetake,
   dek_group_predmet.predmet AS namePair,
   NULL AS date
 FROM dek_group_predmet
@@ -61,16 +64,19 @@ WHERE dek_group_predmet.id_prep = ${id_prep}
     
     SELECT 
   'extramural' AS scheduleType,
-  dek_settings.value AS weekCorrection,
+    NULL  AS weekCorrection,
   dek_zgroup_predmet.id AS idPair,
   dek_zgroup_predmet.zal AS comments,
   dek_room.number AS roomNumber,
+  NULL AS roomName,
   dek_zgroup.name AS groupName,
   dek_zgroup.id AS idGroup,
   NULL AS chetnechet,
   NULL AS weekday,
+  FALSE AS isSession,
   dek_zgroup_predmet.para AS numberPair,
   dek_cpoints.short AS typePair,
+  NULL AS typePairRetake,
   dek_zgroup_predmet.predmet AS namePair,
   dek_zgroup_predmet.date AS date
 FROM dek_zgroup_predmet
@@ -82,11 +88,35 @@ LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
 WHERE dek_zgroup_predmet.id_prep = ${id_prep}
   AND dek_zgroup_predmet.id_prep != -1
   AND dek_zgroup_predmet.date >= CURDATE() 
-
+  
+  UNION
+  SELECT
+    'session' AS scheduleType,
+    null AS weekCorrection,
+    dek_sgroup_predmet.id AS idPair,
+    dek_sgroup_predmet.zal AS comments,
+    dek_room.number AS roomNumber,
+    dek_room.name AS roomName,
+    dek_group.name AS groupName,
+    dek_group.id AS idGroup,
+    NULL AS chetnechet,
+    NULL AS weekday,
+    FALSE AS isSession,
+    dek_sgroup_predmet.time AS numberPair,
+    dek_cpoints.short AS typePair,
+    NULL AS typePairRetake,
+    dek_sgroup_predmet.predmet AS namePair,
+    dek_sgroup_predmet.date AS date
+FROM dek_sgroup_predmet
+LEFT JOIN dek_group ON dek_group.id = dek_sgroup_predmet.id_group
+LEFT JOIN dek_room ON dek_room.id = dek_sgroup_predmet.id_room
+LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_sgroup_predmet.zach_exam
+LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
+WHERE dek_sgroup_predmet.id_prep = ${id_prep}
+AND dek_sgroup_predmet.date >= CURDATE()
 ORDER BY 
   date ASC, 
   numberPair ASC;
-
 
     `,
     (error, rows) => {
@@ -100,13 +130,19 @@ ORDER BY
         "19:10-20:40",
       ];
       const scheduleResident = {
-        weekCorrection: rows[0].weekCorrection,
+        weekCorrection: rows && rows.length > 0 ? rows[0].weekCorrection : null,
         numerator: [],
         denominator: [],
+        session: [],
       };
       const scheduleExtramural = [];
       const extramuralGroupsByDate = {}; // Объект для группировки заочных пар по дате
-
+      const sessionGroups = {};
+      const result = {
+        groupType: "", // Инициализируем groupType пустой строкой или значением по умолчанию
+        scheduleResident,
+        scheduleExtramural,
+      };
       if (error) {
         console.log(error);
         res.status(500).json({ error: "Произошла ошибка" });
@@ -116,7 +152,30 @@ ORDER BY
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
             row.numberPair = timeIntervals[numberPair - 1];
           }
+          if (row.groupType === "session") {
+            row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+            if (row.isSession) {
+              const formattedNumberPair = moment(row.numberPair, [
+                "HH:mm",
+                "HH.mm",
+                "HH-mm",
+              ]).format("HH:mm");
 
+              row.numberPair = formattedNumberPair;
+
+              if (row.typePairRetake) {
+                row.typePairRetake = row.typePairRetake.replace(
+                  /<\/?i>|<\/?b>/g,
+                  ""
+                );
+              }
+
+              if (!sessionGroups[row.date]) {
+                sessionGroups[row.date] = [];
+              }
+              sessionGroups[row.date].push(row);
+            }
+          }
           // Определение, куда добавлять данные
           if (row.scheduleType === "resident") {
             if (row.chetnechet === 1) {
@@ -142,11 +201,6 @@ ORDER BY
             schedule,
           });
         });
-
-        const result = {
-          scheduleResident,
-          scheduleExtramural,
-        };
 
         res.status(200).json(result);
       }

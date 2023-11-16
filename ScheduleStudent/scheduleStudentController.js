@@ -254,71 +254,7 @@ WHERE dek_sgroup_predmet.id_group = ${id_group}
     }
   );
 };
-exports.getScheduleSessionStudent = (req, res) => {
-  const { id_group } = req.body;
-  db.query(
-    `
-    SELECT
-    dek_sgroup_predmet.id AS idPair,
-    dek_sgroup_predmet.zal AS comments,
-    dek_room.number AS roomNumber,
-    dek_sgroup_predmet.time AS numberPair,
-    dek_cpoints.short AS typePair,
-    dek_cpoints.alt AS typePairRetake,
-    dek_sgroup_predmet.predmet AS namePair,
-    dek_prepod.name AS fullNameEducator,
-    dek_sgroup_predmet.id_prep AS idEducator,
-    dek_prepod.regalia AS regaliaEducator,
-    dek_sgroup_predmet.date AS date
-FROM dek_sgroup_predmet
-LEFT JOIN dek_prepod ON dek_prepod.id = dek_sgroup_predmet.id_prep
-LEFT JOIN dek_room ON dek_room.id = dek_sgroup_predmet.id_room
-LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_sgroup_predmet.zach_exam
-WHERE dek_sgroup_predmet.id_group = ${id_group}
-    AND dek_sgroup_predmet.date >= CURDATE()
-ORDER BY 
-date ASC, numberPair ASC
-      `,
-    (error, rows) => {
-      if (error) {
-        console.log(error);
-        res.status(500).json({ error: "Произошла ошибка" });
-      } else {
-        const scheduleSession = {
-          groupType: "resident",
-          session: [],
-        };
 
-        const extramuralGroupsByDate = {};
-
-        rows.forEach((row) => {
-          if (row.date) {
-            row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
-            if (!extramuralGroupsByDate[row.date]) {
-              extramuralGroupsByDate[row.date] = [];
-            }
-
-            const formattedNumberPair = moment(row.numberPair, [
-              "HH:mm",
-              "HH.mm",
-              "HH-mm",
-            ]).format("HH:mm");
-
-            row.numberPair = formattedNumberPair;
-
-            // Внесение изменений: добавляем groupType на самый верхний уровень
-            scheduleSession.session.push({
-              date: row.date,
-              schedule: [row],
-            });
-          }
-        });
-
-        res.status(200).json(scheduleSession);
-      }
-    }
-  );
-};
 exports.getFullScheduleStudentExtramuralist = (req, res) => {
   const { id_group } = req.body;
 
