@@ -44,6 +44,7 @@ exports.getScheduleEducator = (req, res) => {
     ELSE ''
   END AS weekday,
   FALSE AS isSession,
+  NULL AS isActive,
   dek_group_predmet.para AS numberPair,
   dek_cpoints.short AS typePair,
   NULL AS typePairRetake,
@@ -74,6 +75,7 @@ WHERE dek_group_predmet.id_prep = ${id_prep}
   NULL AS chetnechet,
   NULL AS weekday,
   FALSE AS isSession,
+  dek_zgroup.active AS isActive,
   dek_zgroup_predmet.para AS numberPair,
   dek_cpoints.short AS typePair,
   NULL AS typePairRetake,
@@ -101,10 +103,11 @@ WHERE dek_zgroup_predmet.id_prep = ${id_prep}
     dek_group.id AS idGroup,
     NULL AS chetnechet,
     NULL AS weekday,
-    FALSE AS isSession,
+    TRUE AS isSession,
+    NULL AS isActive,
     dek_sgroup_predmet.time AS numberPair,
     dek_cpoints.short AS typePair,
-    NULL AS typePairRetake,
+    dek_cpoints.alt AS typePairRetake,
     dek_sgroup_predmet.predmet AS namePair,
     dek_sgroup_predmet.date AS date
 FROM dek_sgroup_predmet
@@ -113,7 +116,10 @@ LEFT JOIN dek_room ON dek_room.id = dek_sgroup_predmet.id_room
 LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_sgroup_predmet.zach_exam
 LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
 WHERE dek_sgroup_predmet.id_prep = ${id_prep}
-AND dek_sgroup_predmet.date >= CURDATE()
+AND (
+  (MONTH(CURDATE()) > 8 AND MONTH(dek_sgroup_predmet.date) > 8) OR
+  (MONTH(CURDATE()) <= 8 AND MONTH(dek_sgroup_predmet.date) <= 8)
+)
 ORDER BY 
   date ASC, 
   numberPair ASC;
@@ -139,6 +145,7 @@ ORDER BY
       const extramuralGroupsByDate = {}; // Объект для группировки заочных пар по дате
       const sessionGroups = {};
       const result = {
+        extramuralIsActive: false,
         groupType: "", // Инициализируем groupType пустой строкой или значением по умолчанию
         scheduleResident,
         scheduleExtramural,
@@ -152,7 +159,7 @@ ORDER BY
           if (numberPair >= 1 && numberPair <= timeIntervals.length) {
             row.numberPair = timeIntervals[numberPair - 1];
           }
-          if (row.groupType === "session") {
+          if (row.scheduleType === "session") {
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
             if (row.isSession) {
               const formattedNumberPair = moment(row.numberPair, [
@@ -184,6 +191,10 @@ ORDER BY
               scheduleResident.denominator.push(row);
             }
           } else if (row.scheduleType === "extramural") {
+            if (row.isActive) {
+              result.extramuralIsActive = true;
+              console.log(123)
+            }
             if (row.date) {
               row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
               if (!extramuralGroupsByDate[row.date]) {
@@ -201,7 +212,12 @@ ORDER BY
             schedule,
           });
         });
-
+        Object.entries(sessionGroups).forEach(([date, schedule]) => {
+          scheduleResident.session.push({
+            date,
+            schedule,
+          });
+        });
         res.status(200).json(result);
       }
     }

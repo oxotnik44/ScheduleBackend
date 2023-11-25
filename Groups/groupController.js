@@ -31,7 +31,8 @@ exports.getGroupsExtramuralists = (req, res) => {
   db.query(
     `SELECT 
       dek_zgroup.id AS idGroup,
-      dek_zgroup.name AS nameGroup
+      dek_zgroup.name AS nameGroup,
+      dek_zgroup.asp_o_z AS isResidentAspirant
     FROM dek_zgroup
     WHERE dek_zgroup.id_dep = ${id_dep}
     ORDER BY dek_zgroup.name ASC`,
@@ -42,6 +43,7 @@ exports.getGroupsExtramuralists = (req, res) => {
         const result = rows.map((row) => ({
           idGroup: row.idGroup,
           nameGroup: row.nameGroup,
+          isResidentAspirant:row.isResidentAspirant
         }));
         res.status(200).json(result);
       }
