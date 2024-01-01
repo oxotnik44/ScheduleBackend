@@ -193,7 +193,6 @@ ORDER BY
           } else if (row.scheduleType === "extramural") {
             if (row.isActive) {
               result.extramuralIsActive = true;
-              console.log(123)
             }
             if (row.date) {
               row.date = moment(row.date).locale("ru").format("D MMMM YYYY");

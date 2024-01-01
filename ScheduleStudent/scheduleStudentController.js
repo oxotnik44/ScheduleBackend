@@ -245,7 +245,6 @@ exports.getScheduleStudent = (req, res) => {
             row.numberPair = timeIntervals[numberPair - 1];
           }
           if (row.groupType === "session") {
-
             row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
             if (row.isSession) {
               const formattedNumberPair = moment(row.numberPair, [
@@ -268,7 +267,8 @@ exports.getScheduleStudent = (req, res) => {
               }
               sessionGroups[row.date].push(row);
             }
-          }
+          } 
+
           if (row.groupType === "extramural" && row.nameGroup === name) {
             result.groupType = "extramural";
             if (row.isActive) {
@@ -282,7 +282,38 @@ exports.getScheduleStudent = (req, res) => {
 
               extramuralGroupsByDate[row.date].push(row);
             }
-          } else if (row.groupType === "resident" && row.nameGroup === name) {
+          } else if (row.groupType === "extramural") {
+            result.groupType = "extramural";
+            if (row.isActive) {
+              result.extramuralIsActive = true;
+            }
+            if (row.date) {
+              row.date = moment(row.date).locale("ru").format("D MMMM YYYY");
+              if (!extramuralGroupsByDate[row.date]) {
+                extramuralGroupsByDate[row.date] = [];
+              }
+
+              extramuralGroupsByDate[row.date].push(row);
+            }
+          }
+          if (row.groupType === "resident" && row.nameGroup === name) {
+            result.groupType = "resident";
+
+            if (row.weekday) {
+              if (
+                (row.chetnechet === 1 && row.weekNumber === currentWeek) ||
+                (row.chetnechet === 2 && row.weekNumber === currentWeek) ||
+                (row.chetnechet === 1 && row.weekNumber === nextWeek) ||
+                (row.chetnechet === 2 && row.weekNumber === nextWeek)
+              ) {
+                if (row.chetnechet === 1) {
+                  scheduleResident.numerator.push(row);
+                } else {
+                  scheduleResident.denominator.push(row);
+                }
+              }
+            }
+          } else if (row.groupType === "resident") {
             result.groupType = "resident";
 
             if (row.weekday) {
@@ -302,7 +333,6 @@ exports.getScheduleStudent = (req, res) => {
           }
         });
 
-        console.log(result.extramuralIsActive);
         Object.entries(extramuralGroupsByDate).forEach(([date, schedule]) => {
           scheduleExtramural.push({
             date,

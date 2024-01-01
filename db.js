@@ -1,8 +1,10 @@
 const mysql = require('mysql')
 
 const connection = mysql.createPool({
-    // host: "172.16.12.247",
-    host: "81.1.253.180",
+    //продакшен
+    host: "172.16.12.247",
+    //разработка
+    // host: "81.1.253.180",
     port:"1248",
     user: "phoneapp",
     password: "niuIUnuio8bi@jju3",
