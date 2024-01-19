@@ -88,7 +88,6 @@ LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_zgroup_predmet.zach_exam
 LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
 
 WHERE dek_zgroup_predmet.id_prep = ${id_prep}
-  AND dek_zgroup_predmet.id_prep != -1
   AND dek_zgroup_predmet.date >= CURDATE() 
   
   UNION

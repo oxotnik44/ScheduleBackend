@@ -88,7 +88,7 @@ exports.getScheduleStudent = (req, res) => {
           LEFT JOIN dek_settings ON dek_settings.parameter = 'week_correction'
           LEFT JOIN dek_group ON dek_group.id = ${id_group}
           WHERE dek_group_predmet.id_group = ${id_group}
-              AND dek_group_predmet.id_prep != -1
+              AND dek_group.name = '${name}'
       )
       UNION
       (
@@ -129,6 +129,7 @@ exports.getScheduleStudent = (req, res) => {
           WHERE dek_zgroup_predmet.id_group = ${id_group}
               ${id_group == 3430 ? "" : "AND dek_zgroup_predmet.id_prep != -1"}
               AND dek_zgroup_predmet.date >= CURDATE() -- Добавляем условие для текущей даты
+              AND dek_zgroup.name = '${name}'
       )
       UNION
       (
@@ -167,10 +168,9 @@ exports.getScheduleStudent = (req, res) => {
           LEFT JOIN dek_cpoints ON dek_cpoints.id = dek_sgroup_predmet.zach_exam
           WHERE dek_sgroup_predmet.id_group = ${id_group}
           AND (
-            (YEAR(CURDATE()) = YEAR(dek_sgroup_predmet.date) AND MONTH(CURDATE()) > 8)
-            OR
-            (YEAR(CURDATE()) < YEAR(dek_sgroup_predmet.date) AND MONTH(dek_sgroup_predmet.date) <= 8)
-        )
+            (MONTH(CURDATE()) > 8 AND MONTH(dek_sgroup_predmet.date) > 8) OR
+            (MONTH(CURDATE()) <= 8 AND MONTH(dek_sgroup_predmet.date) <= 8)
+          )
         
       )
       UNION
@@ -199,7 +199,7 @@ exports.getScheduleStudent = (req, res) => {
               NULL AS weekNumber,
               NULL AS orderWeekday
           FROM dek_zgroup
-          LEFT JOIN dek_zgroup AS zgroup ON zgroup.id = ${id_group}
+          WHERE dek_zgroup.id = ${id_group}
       )
   ) AS combinedResult
   ORDER BY 
@@ -237,6 +237,7 @@ exports.getScheduleStudent = (req, res) => {
           scheduleExtramural,
         };
         rows.forEach((row) => {
+          console.log(row.isActive)
           if (row.groupType === "active" && row.isActive) {
             result.extramuralIsActive = true; // Устанавливаем флаг, если находим хотя бы один isActive = true
           }
@@ -268,7 +269,6 @@ exports.getScheduleStudent = (req, res) => {
               sessionGroups[row.date].push(row);
             }
           } 
-
           if (row.groupType === "extramural" && row.nameGroup === name) {
             result.groupType = "extramural";
             if (row.isActive) {
@@ -298,7 +298,6 @@ exports.getScheduleStudent = (req, res) => {
           }
           if (row.groupType === "resident" && row.nameGroup === name) {
             result.groupType = "resident";
-
             if (row.weekday) {
               if (
                 (row.chetnechet === 1 && row.weekNumber === currentWeek) ||
@@ -314,6 +313,7 @@ exports.getScheduleStudent = (req, res) => {
               }
             }
           } else if (row.groupType === "resident") {
+
             result.groupType = "resident";
 
             if (row.weekday) {
